@@ -1,0 +1,83 @@
+[{
+  "strategy": "zero_shot",
+  "prompt_prefix": "create table author (\n    author_id integer primary key,\n    first_name varchar(20) not null,\n    last_name varchar(20) not null,\n    bio varchar(200),\n    image_url varchar(100)\n);\n\ncreate table cookbook (\n    cookbook_id integer primary key,\n    num_pages integer not null,\n    cover_image_url varchar(100),\n    book_name varchar(100) not null,\n    is_public integer not null default 0,\n    price integer\n);\n\ncreate table author_cookbook (\n    author_id integer,\n    cookbook_id integer,\n    primary key (author_id, cookbook_id),\n    foreign key (author_id) references author (author_id),\n    foreign key (cookbook_id) references cookbook (cookbook_id)\n);\n\ncreate table cuisine (\n    cuisine_id integer primary key,\n    cuisine_name varchar(100) not null,\n    origin_country varchar(100),\n    description varchar(500)\n);\n\ncreate table category (\n    category_id integer primary key,\n    category_name varchar(100) not null,\n    description varchar(500)\n);\n\ncreate table dish (\n    dish_id integer primary key,\n    dish_name varchar(100) not null,\n    cuisine_id integer,\n    category_id integer,\n    cookbook_id integer, \n    dish_description varchar(500),\n    instructions varchar(1000),\n    total_time_minutes integer not null,\n    servings integer,\n    difficulty_level VARCHAR(10) CHECK (difficulty_level IN ('easy','medium','hard')),\n    foreign key (cuisine_id) references cuisine (cuisine_id),\n    foreign key (category_id) references category (category_id),\n    foreign key (cookbook_id) references cookbook (cookbook_id)\n);\n\ncreate table spice (\n    spice_id integer primary key,\n    spice_name varchar(500) not null,\n    price_per_gram real,\n    origin_region varchar(500)\n);\n\ncreate table spice_dish (\n    spice_id integer,\n    dish_id integer,\n    primary key (spice_id, dish_id),\n    foreign key (spice_id) references spice (spice_id),\n    foreign key (dish_id) references dish (dish_id)\n);\n\ncreate table ingredient (\n    ingredient_id integer primary key,\n    ingredient_name varchar(100) not null,\n    calories_per_100g integer,\n    price_per_100g integer,\n    allergens varchar(100)\n);\n\ncreate table ingredient_dish (\n    ingredient_id integer,\n    dish_id integer,\n    primary key (ingredient_id, dish_id),\n    foreign key (ingredient_id) references ingredient (ingredient_id),\n    foreign key (dish_id) references dish (dish_id)\n);\n\n Give me a sqlite select statement that answers the question. Only respond with sqlite syntax. If there is an error do not explain it!",
+  "questionResults": [
+    {
+      "question": "Which authors have the most cookbooks?",
+      "sql": "\nSELECT a.first_name, a.last_name, COUNT(ac.cookbook_id) AS cookbook_count\nFROM author a\nJOIN author_cookbook ac ON a.author_id = ac.author_id\nGROUP BY a.author_id\nORDER BY cookbook_count DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[('John', 'Doe', 1)]",
+      "friendlyResponse": "John Doe with 1 cookbook.",
+      "error": "None"
+    },
+    {
+      "question": "Which spices are used in Italian cuisine?",
+      "sql": "\nSELECT DISTINCT s.spice_name\nFROM spice s\nJOIN spice_dish sd ON s.spice_id = sd.spice_id\nJOIN dish d ON sd.dish_id = d.dish_id\nJOIN cuisine c ON d.cuisine_id = c.cuisine_id\nWHERE c.cuisine_name = 'Italian';\n",
+      "queryRawResponse": "[('Basil',)]",
+      "friendlyResponse": "Basil, oregano, rosemary, thyme, sage, and parsley.",
+      "error": "None"
+    },
+    {
+      "question": "What is the average amount of ingredients in a dish?",
+      "sql": "\nSELECT AVG(ingredient_count) \nFROM (\n    SELECT dish_id, COUNT(ingredient_id) AS ingredient_count\n    FROM ingredient_dish\n    GROUP BY dish_id\n);\n",
+      "queryRawResponse": "[(1.0,)]",
+      "friendlyResponse": "The average number of ingredients in a dish is 1.",
+      "error": "None"
+    },
+    {
+      "question": "Which cuisine has the most dishes",
+      "sql": "\nSELECT cuisine.cuisine_name\nFROM cuisine\nJOIN dish ON cuisine.cuisine_id = dish.cuisine_id\nGROUP BY cuisine.cuisine_id\nORDER BY COUNT(dish.dish_id) DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[('Indian',)]",
+      "friendlyResponse": "Indian cuisine.",
+      "error": "None"
+    },
+    {
+      "question": "If I buy a cookbook, what is the average amount of ingredients I need to buy to make all the dishes in the cookbook?",
+      "sql": "\nSELECT AVG(ingredient_count) AS average_ingredients\nFROM (\n    SELECT d.cookbook_id, COUNT(DISTINCT id.ingredient_id) AS ingredient_count\n    FROM dish d\n    JOIN ingredient_dish id ON d.dish_id = id.dish_id\n    GROUP BY d.cookbook_id\n);\n",
+      "queryRawResponse": "[(1.0,)]",
+      "friendlyResponse": "I'm sorry, but I can't determine the average number of ingredients you need without more specific information about the cookbook.",
+      "error": "None"
+    }
+  ]
+},
+
+{
+  "strategy": "single_domain_double_shot",
+  "prompt_prefix": "create table author (\n    author_id integer primary key,\n    first_name varchar(20) not null,\n    last_name varchar(20) not null,\n    bio varchar(200),\n    image_url varchar(100)\n);\n\ncreate table cookbook (\n    cookbook_id integer primary key,\n    num_pages integer not null,\n    cover_image_url varchar(100),\n    book_name varchar(100) not null,\n    is_public integer not null default 0,\n    price integer\n);\n\ncreate table author_cookbook (\n    author_id integer,\n    cookbook_id integer,\n    primary key (author_id, cookbook_id),\n    foreign key (author_id) references author (author_id),\n    foreign key (cookbook_id) references cookbook (cookbook_id)\n);\n\ncreate table cuisine (\n    cuisine_id integer primary key,\n    cuisine_name varchar(100) not null,\n    origin_country varchar(100),\n    description varchar(500)\n);\n\ncreate table category (\n    category_id integer primary key,\n    category_name varchar(100) not null,\n    description varchar(500)\n);\n\ncreate table dish (\n    dish_id integer primary key,\n    dish_name varchar(100) not null,\n    cuisine_id integer,\n    category_id integer,\n    cookbook_id integer, \n    dish_description varchar(500),\n    instructions varchar(1000),\n    total_time_minutes integer not null,\n    servings integer,\n    difficulty_level VARCHAR(10) CHECK (difficulty_level IN ('easy','medium','hard')),\n    foreign key (cuisine_id) references cuisine (cuisine_id),\n    foreign key (category_id) references category (category_id),\n    foreign key (cookbook_id) references cookbook (cookbook_id)\n);\n\ncreate table spice (\n    spice_id integer primary key,\n    spice_name varchar(500) not null,\n    price_per_gram real,\n    origin_region varchar(500)\n);\n\ncreate table spice_dish (\n    spice_id integer,\n    dish_id integer,\n    primary key (spice_id, dish_id),\n    foreign key (spice_id) references spice (spice_id),\n    foreign key (dish_id) references dish (dish_id)\n);\n\ncreate table ingredient (\n    ingredient_id integer primary key,\n    ingredient_name varchar(100) not null,\n    calories_per_100g integer,\n    price_per_100g integer,\n    allergens varchar(100)\n);\n\ncreate table ingredient_dish (\n    ingredient_id integer,\n    dish_id integer,\n    primary key (ingredient_id, dish_id),\n    foreign key (ingredient_id) references ingredient (ingredient_id),\n    foreign key (dish_id) references dish (dish_id)\n);\n\n What dishes are part of Italian cuisine?  \nSELECT d.dish_id, d.dish_name\nFROM dish d\nJOIN cuisine c ON d.cuisine_id = c.cuisine_id\nWHERE c.cuisine_name = 'Italian';\n  Give me a sqlite select statement that answers the question. Only respond with sqlite syntax. If there is an error do not explain it!",
+  "questionResults": [
+    {
+      "question": "Which authors have the most cookbooks?",
+      "sql": "\nSELECT a.author_id, a.first_name, a.last_name, COUNT(ac.cookbook_id) AS cookbook_count\nFROM author a\nJOIN author_cookbook ac ON a.author_id = ac.author_id\nGROUP BY a.author_id, a.first_name, a.last_name\nORDER BY cookbook_count DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[(1, 'John', 'Doe', 1)]",
+      "friendlyResponse": "It seems like the author John Doe has published 1 cookbook.",
+      "error": "None"
+    },
+    {
+      "question": "Which spices are used in Italian cuisine?",
+      "sql": "\nSELECT DISTINCT s.spice_id, s.spice_name\nFROM spice_dish sd\nJOIN dish d ON sd.dish_id = d.dish_id\nJOIN cuisine c ON d.cuisine_id = c.cuisine_id\nJOIN spice s ON sd.spice_id = s.spice_id\nWHERE c.cuisine_name = 'Italian';\n",
+      "queryRawResponse": "[(1, 'Basil')]",
+      "friendlyResponse": "Basil is commonly used in Italian cuisine.",
+      "error": "None"
+    },
+    {
+      "question": "What is the average amount of ingredients in a dish?",
+      "sql": "\nSELECT AVG(ingredient_count) \nFROM (\n    SELECT COUNT(id.ingredient_id) as ingredient_count\n    FROM ingredient_dish id\n    GROUP BY id.dish_id\n);\n",
+      "queryRawResponse": "[(1.0,)]",
+      "friendlyResponse": "The average amount of ingredients in a dish is 1.",
+      "error": "None"
+    },
+    {
+      "question": "Which cuisine has the most dishes",
+      "sql": "\nSELECT c.cuisine_name\nFROM cuisine c\nJOIN dish d ON c.cuisine_id = d.cuisine_id\nGROUP BY c.cuisine_id\nORDER BY COUNT(d.dish_id) DESC\nLIMIT 1;\n",
+      "queryRawResponse": "[('Indian',)]",
+      "friendlyResponse": "Indian cuisine.",
+      "error": "None"
+    },
+    {
+      "question": "If I buy a cookbook, what is the average amount of ingredients I need to buy to make all the dishes in the cookbook?",
+      "sql": "\nSELECT AVG(dish_ingredient_count) \nFROM (\n    SELECT COUNT(id.ingredient_id) AS dish_ingredient_count\n    FROM dish d\n    JOIN ingredient_dish id ON d.dish_id = id.dish_id\n    WHERE d.cookbook_id = ?\n    GROUP BY d.dish_id\n);\n",
+      "queryRawResponse": "[('Indian',)]",
+      "friendlyResponse": "Indian cuisine.",
+      "error": "Incorrect number of bindings supplied. The current statement uses 1, and there are 0 supplied."
+    }
+  ]
+}]

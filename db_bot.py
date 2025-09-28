@@ -73,8 +73,8 @@ strategies = {
 
 questions = [
     "Which authors have the most cookbooks?",
-    # "Which spices are used in Italian cuisine?",
-    # "What is the average amount of ingredients in a dish?",
+    "Which spices are used in Italian cuisine?",
+    "What is the average amount of ingredients in a dish?",
     # "Which categories have the most amount of dishes",
     # "Which cookbooks have the most dishes",
     # "Which dishes use the most spices",
